@@ -6,13 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.api.utils.database import get_db, get_async_db
+from app.api.utils.database import get_async_db
 from app.api.dependencies.auth import get_current_user, get_current_user_async
 from app.api.models.user import User
 from app.api.schemas.post import PostCreate, PostResponse, PostListResponse, PostDelete
 from app.api.services.post import post_service
 from app.api.services.base import AsyncServiceStrategy
 from app.api.repositories.post import async_post_repository
+from app.api.repositories.user import async_user_repository
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -36,7 +37,18 @@ async def add_post(
     # Set async strategy for this request
     post_service.set_strategy(AsyncServiceStrategy(async_post_repository))
     
-    return await post_service.create_post_async(db=db, post_data=post_data, user=current_user)
+    # Extract user ID here to avoid lazy loading issues
+    user_id = current_user.id
+    
+    # Get a fully loaded user instance to avoid async lazy loading issues
+    user = await async_user_repository.get(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return await post_service.create_post_async(db=db, post_data=post_data, user=user)
 
 @router.get("/", response_model=PostListResponse)
 async def get_posts(
@@ -56,7 +68,10 @@ async def get_posts(
     # Set async strategy for this request
     post_service.set_strategy(AsyncServiceStrategy(async_post_repository))
     
-    posts = await post_service.get_posts_by_user_async(db=db, user_id=current_user.id)
+    # Extract user ID to avoid lazy loading issues
+    user_id = current_user.id
+    
+    posts = await post_service.get_posts_by_user_async(db=db, user_id=user_id)
     return {"posts": posts}
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -79,8 +94,11 @@ async def remove_post(
     # Set async strategy for this request
     post_service.set_strategy(AsyncServiceStrategy(async_post_repository))
     
+    # Extract user ID to avoid lazy loading issues
+    user_id = current_user.id
+    
     # Check if the post exists and belongs to the current user
-    post = await post_service.get_post_by_id_async(db, post_id=post_id, user_id=current_user.id)
+    post = await post_service.get_post_by_id_async(db, post_id=post_id, user_id=user_id)
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -88,7 +106,7 @@ async def remove_post(
         )
     
     # Delete the post
-    success = await post_service.delete_post_async(db=db, post_id=post_id, user_id=current_user.id)
+    success = await post_service.delete_post_async(db=db, post_id=post_id, user_id=user_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

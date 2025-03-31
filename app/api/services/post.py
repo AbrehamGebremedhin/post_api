@@ -83,15 +83,18 @@ class PostService(BaseService[Post]):
         Returns:
             Post: The created post.
         """
+        # Extract user_id to avoid lazy loading issues
+        user_id = user.id
+        
         # Create a new post using repository
         post = await async_post_repository.create(
             db=db, 
             obj_in=post_data, 
-            user_id=user.id
+            user_id=user_id
         )
         
         # Invalidate the cached posts for this user
-        cache_key = generate_post_cache_key(user.id)
+        cache_key = generate_post_cache_key(user_id)
         clear_cache(cache_key)
         
         return post
