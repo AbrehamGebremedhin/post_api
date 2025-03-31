@@ -66,7 +66,7 @@ app/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/AbrehamGebremedhin/post-api.git
+git clone https://github.com/AbrehamGebremedhin/post_api.git
 cd post-api
 ```
 
