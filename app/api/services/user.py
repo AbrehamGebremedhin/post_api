@@ -56,10 +56,13 @@ class UserService(BaseService[User]):
         # Hash the password
         hashed_password = get_password_hash(user_data.password)
         
+        # Create a dict from user_data but exclude the password field
+        user_data_dict = user_data.model_dump(exclude={"password"})
+        
         # Create the user using repository with hashed_password in kwargs
         return await async_user_repository.create(
             db=db, 
-            obj_in=user_data, 
+            obj_in=user_data_dict, 
             hashed_password=hashed_password
         )
     
@@ -77,10 +80,13 @@ class UserService(BaseService[User]):
         # Hash the password
         hashed_password = get_password_hash(user_data.password)
         
+        # Create a dict from user_data but exclude the password field
+        user_data_dict = user_data.model_dump(exclude={"password"})
+        
         # Create the user using repository with hashed_password in kwargs
         return user_repository.create(
             db=db, 
-            obj_in=user_data, 
+            obj_in=user_data_dict, 
             hashed_password=hashed_password
         )
 

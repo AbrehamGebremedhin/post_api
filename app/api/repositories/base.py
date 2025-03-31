@@ -69,7 +69,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Returns:
             The created record.
         """
-        obj_in_data = obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
+        if isinstance(obj_in, dict):
+            obj_in_data = obj_in
+        else:
+            obj_in_data = obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
         db_obj = self.model(**obj_in_data, **kwargs)
         db.add(db_obj)
         db.commit()
@@ -169,7 +172,10 @@ class AsyncBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]
         Returns:
             The created record.
         """
-        obj_in_data = obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
+        if isinstance(obj_in, dict):
+            obj_in_data = obj_in
+        else:
+            obj_in_data = obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
         db_obj = self.model(**obj_in_data, **kwargs)
         db.add(db_obj)
         await db.commit()
