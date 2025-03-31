@@ -67,7 +67,7 @@ app/
 
 ```bash
 git clone https://github.com/AbrehamGebremedhin/post_api.git
-cd post-api
+cd post_api
 ```
 
 2. Create a virtual environment:
